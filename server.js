@@ -5,17 +5,20 @@ require('dotenv').config();
 
 const { AccessToken } = require('livekit-server-sdk');
 
-const createToken = ({ canPublish, username }) => {
+const createToken = ({ canPublish, userName }) => {
     // if this room doesn't exist, it'll be automatically created when the first
     // client joins
     const roomName = 'spacev2-demo';
     // identifier to be used for participant.
     // it's available as LocalParticipant.identity with livekit-client SDK
-    const participantName = 'gen-username';
+    const participantName = userName;
 
     const at = new AccessToken(process.env.LK_API_KEY, process.env.LK_API_SECRET, {
         identity: participantName,
     });
+
+    console.log(userName)
+    console.log(canPublish)
 
     at.addGrant({
         roomJoin: true,
@@ -34,6 +37,7 @@ app.use(cors());
 
 app.get('/token', (req, res) => {
     const userType = req.query.userType;
+    const userName = req.query.userName;
 
     let canPublish = false;
     if (userType === 'sender') {
@@ -42,7 +46,7 @@ app.get('/token', (req, res) => {
         canPublish = false;
     }
 
-    const token = createToken(canPublish);
+    const token = createToken({ canPublish, userName });
 
     res.send(token);
 });
