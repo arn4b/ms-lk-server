@@ -1,5 +1,8 @@
 const express = require('express');
+const cors = require('cors');
+
 require('dotenv').config();
+
 const { AccessToken } = require('livekit-server-sdk');
 
 const createToken = ({ canPublish, username }) => {
@@ -26,6 +29,8 @@ const createToken = ({ canPublish, username }) => {
 
 const app = express();
 const port = process.env.PORT || 3000;
+
+app.use(cors());
 
 app.get('/token', (req, res) => {
     const userType = req.query.userType;
