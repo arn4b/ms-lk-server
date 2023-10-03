@@ -5,10 +5,10 @@ require('dotenv').config();
 
 const { AccessToken, RoomServiceClient } = require('livekit-server-sdk');
 
-const createRoom = async (roomId) => {
-    const livekitHost = 'https://spacev2-demo-17wvllxz.livekit.cloud';
-    const roomService = new RoomServiceClient(livekitHost, process.env.LK_API_KEY, process.env.LK_API_SECRET);
+const livekitHost = 'https://spacev2-demo-17wvllxz.livekit.cloud';
+const roomService = new RoomServiceClient(livekitHost, process.env.LK_API_KEY, process.env.LK_API_SECRET);
 
+const createRoom = async (roomId) => {
     const opts = {
         name: roomId,
         emptyTimeout: 10 * 60, // 10 minutes
@@ -47,6 +47,33 @@ const createToken = async ({ canPublish, userName, roomId }) => {
     return at.toJwt();
 }
 
+const performAction = async ({ roomName, identity, canPublish }) => {
+    if (canPublish) {
+        const res = await roomService.updateParticipant(roomName, identity, undefined, {
+            canPublish: true,
+            canSubscribe: true,
+            canPublishData: true,
+        });
+
+        return res;
+    } else {
+        const res = await roomService.updateParticipant(roomName, identity, undefined, {
+            canPublish: false,
+            canSubscribe: true,
+            canPublishData: true,
+        });
+
+        return res;
+    }
+}
+
+const kick = async ({ roomName, identity }) => {
+    await roomService.removeParticipant({
+        room: roomName,
+        identity: identity,
+    });
+}
+
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -65,16 +92,26 @@ app.get('/token', async (req, res) => {
     }
 
     const token = await createToken({ canPublish, userName, roomId });
-    console.log("🚀 ~ file: server.js:68 ~ app.get ~ token:", token)
 
     res.send(token);
 });
 
-app.get('/createRoom', (req, res) => {
-    const roomId = req.query.roomId;
+app.get('/execute', async (req, res) => {
+    const roomName = req.query.roomName;
+    const identity = req.query.identity;
+    const canPublish = JSON.parse(req.query.canPublish);
 
-    const room = createRoom(roomId)
-    res.send(room);
+    const updatedPeer = await performAction({ roomName, identity, canPublish });
+    console.log("🚀 ~ file: server.js:101 ~ app.get ~ updatedPeer:", updatedPeer)
+    res.send(updatedPeer);
+})
+
+app.get('/kick', async (req, res) => {
+    const roomName = req.query.roomName;
+    const identity = req.query.identity;
+
+    const kicked = await kick({ roomName, identity });
+    res.send(kicked);
 })
 
 app.listen(port, () => {
