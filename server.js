@@ -49,6 +49,7 @@ const createToken = async ({ canPublish, userName, roomId }) => {
 
 const performAction = async ({ roomName, identity, canPublish }) => {
     if (canPublish) {
+    try {
         const res = await roomService.updateParticipant(roomName, identity, undefined, {
             canPublish: true,
             canSubscribe: true,
@@ -56,14 +57,21 @@ const performAction = async ({ roomName, identity, canPublish }) => {
         });
 
         return res;
+    } catch (error) {
+        console.error("🚀 ~ file: server.js:61 ~ performAction - TRUE ~ error:", error)
+    }
     } else {
-        const res = await roomService.updateParticipant(roomName, identity, undefined, {
-            canPublish: false,
-            canSubscribe: true,
-            canPublishData: true,
-        });
+        try {
+            const res = await roomService.updateParticipant(roomName, identity, undefined, {
+                canPublish: false,
+                canSubscribe: true,
+                canPublishData: true,
+            });
 
-        return res;
+            return res;
+        } catch (error) {
+            console.error("🚀 ~ file: server.js:73 ~ performAction - FALSE ~ error:", error)
+        }
     }
 }
 
