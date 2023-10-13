@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const cron = require('node-cron');
 
 require('dotenv').config();
 
@@ -81,6 +82,16 @@ const kick = async ({ roomName, identity }) => {
         identity: identity,
     });
 }
+
+// Schedule a cron job to run every 14 minutes
+cron.schedule('*/14 * * * *', () => {
+    // Perform an HTTP GET request to the local server (self-ping)
+    http.get('https://ms-lk-server.onrender.com', (res) => {
+        console.log(`Self-ping status code: ${res.statusCode}`);
+    }).on('error', (err) => {
+        console.error(`Self-ping error: ${err.message}`);
+    });
+});
 
 const app = express();
 const port = process.env.PORT || 3000;
